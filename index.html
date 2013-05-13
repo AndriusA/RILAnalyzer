@@ -32,32 +32,40 @@
 
 <p>The popularity of smartphones, cloud computing, and the app store model have led to cellular networks being used in a completely different way than what they were designed for. As a consequence, mobile applications impose new challenges in the design and efficient configuration of constrained networks to maximize application’s performance. Such difficulties are largely caused by the lack of cross-layer understanding of interactions between different entities - applications, devices, the network and its management plane.</p>
 
-<p>We are releasing RILAnalyzer publicly. It is a tool that provides mechanisms to perform network analysis from within a mobile device. RILAnalyzer is capable of recording low-level radio information and accurate cellular network control-plane data, as well as user-plane data. We demon- strate how such data can be used to identify previously overlooked issues. Through a small user study across four cellular network providers in two European countries we in- fer how different network configurations are in reality and explore how such configurations interact with application logic, causing network and energy overheads.</p>
+<p>We are releasing RILAnalyzer publicly. It is a tool that provides mechanisms to perform network analysis from within a mobile device. RILAnalyzer is capable of recording low-level radio information and accurate cellular network control-plane data, as well as user-plane data. We demon- strate how such data can be used to identify previously overlooked issues. Through a small user study across four cellular network providers in two European countries we infer how different network configurations are in reality and explore how such configurations interact with application logic, causing network and energy overheads.</p>
 
 <p>We are planning to release full source codes soon.</p>
+
+<h3>What's the point?</h3>
+
+<p>The point is obtaining ground-truth about network configuration and its effects on the devices.</p>
+
+<p>Research community has been exploring the relationship between radio network management and device energy consumption for a while, but it is very hard to propose working solutions in the general case:</p>
+
+<img src="/img/energy-network.png" alt="radio state management and energy consumption overheads" />
+
+<p>RILAnalyzer helps to infer the main network parameters to understand such inefficiencies.</p>
+
+<h3>Installation instructions</h3>
 
 <pre><code>$ cd your_repo_root/repo_name
 $ git fetch origin
 $ git checkout gh-pages
 </code></pre>
 
-<p>If you're using the GitHub for Mac, simply sync your repository and you'll see the new branch.</p>
-
-<h3>Designer Templates</h3>
-
-<p>We've crafted some handsome templates for you to use. Go ahead and continue to layouts to browse through them. You can easily go back to edit your page before publishing. After publishing your page, you can revisit the page generator and switch to another theme. Your Page content will be preserved if it remained markdown format.</p>
-
-<h3>Rather Drive Stick?</h3>
-
-<p>If you prefer to not use the automatic generator, push a branch named <code>gh-pages</code> to your repository to create a page manually. In addition to supporting regular HTML content, GitHub Pages support Jekyll, a simple, blog aware static site generator written by our own Tom Preston-Werner. Jekyll makes it easy to create site-wide headers and footers without having to copy them across every page. It also offers intelligent blog support and other advanced templating features.</p>
 
 <h3>Authors and Contributors</h3>
 
 <p>Authors of the project are:
-<a href="https://github.com/narseo" class="user-mention">@narseo</a>, <a href="https://github.com/AndriusA" class="user-mention">@AndriusA</a>, <a href="https://github.com/ravens" class="user-mention">@ravens</a>, <a href="https://github.com/4knahs" class="user-mention">@4knahs</a>, Konstantina Papagiannaki and Jon Crowcroft</p>
+<a href="https://github.com/narseo" class="user-mention">@narseo</a>,
+<a href="https://github.com/AndriusA" class="user-mention">@AndriusA</a>,
+<a href="https://github.com/ravens" class="user-mention">@ravens</a>,
+<a href="https://github.com/4knahs" class="user-mention">@4knahs</a>, 
+<a href="http://people.tid.es/dina.papagiannaki/" class="user-mention">Konstantina Papagiannaki</a> and 
+<a href="http://www.cl.cam.ac.uk/~jac22/" class="user-mention">Jon Crowcroft</a></p>
       </section>
       <footer>
-        <p>This project is maintained by <a href="https://github.com/AndriusA">AndriusA</a></p>
+        <p>The public page is maintained by <a href="https://github.com/AndriusA">AndriusA</a></p>
         <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
       </footer>
     </div>
