@@ -48,10 +48,28 @@
 
 <h3>Installation instructions</h3>
 
-<pre><code>$ cd your_repo_root/repo_name
-$ git fetch origin
-$ git checkout gh-pages
+You will need a rooted device to install the software. We tested it on Samsung Galaxy SII using CyanogenMod 10.1.
+
+To install the user-plane part of the logger, do:
+<pre><code>
+$ cd your_repo_root/RILAnalyzer
+$ adb install NetworkLog.apk
 </code></pre>
+
+Installing the control-plane logger is a little more complex at the moment, as it needs to be installed as a system service:
+<pre><code>
+$ cd your_repo_root/RILAnalyzer
+$ adb push SamsungServiceMode.apk /sdcard/
+$ adb shell
+# mount -o rw,remount /system
+# cp /system/app/SamsungServiceMode.apk /system/app/SamsungServiceMode.apk-backup
+# cp /sdcard/SamsungServiceMode.apk /system/app/
+# mount -o ro,remount /system
+</code></pre>
+
+Now go to NetworkLog application and press the button to start logging. It will start logging all of your network data locally on your sdcard, but will not send in anywhere.
+
+Reboot the phone to start logging control-plane data. Data-plane logging will restart automatically.
 
 
 <h3>Authors and Contributors</h3>
