@@ -1,5 +1,5 @@
 <!doctype html>
-<html>
+<html lang="en">
   <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="chrome=1">
@@ -7,16 +7,28 @@
 
     <link rel="stylesheet" href="stylesheets/styles.css">
     <link rel="stylesheet" href="stylesheets/pygment_trac.css">
-    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Bootstrap -->
+    <link href="stylesheets/bootstrap.min.css" rel="stylesheet" media="screen">
     <!--[if lt IE 9]>
     <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
     <![endif]-->
   </head>
   <body>
-    <div class="wrapper">
-      <header>
-        <h1>Rilanalyzer</h1>
-        <p>public info about RILAnalyzer <br />of Cambridge &amp; Telefonica</p>
+
+    <div class="navbar navbar-fixed-top">
+      <a class="navbar-brand" href="#">RILAnalyzer</a>
+      <ul class="nav navbar-nav">
+        <li class="active"><a href="#">Home</a></li>
+        <li><a href="#">Results</a></li>
+        <li><a href="#">Analyze your data</a></li>
+        <li><a href="#">People</a></li>
+      </ul>
+    </div>
+
+    <div class="wrapper, row">
+      <header class="col-lg-4">
+        <h3>RILAnalyzer <br />of Cambridge &amp; Telefonica</h3>
 
         <p class="view"><a href="https://github.com/AndriusA/RILAnalyzer">View the Project on GitHub <small>AndriusA/RILAnalyzer</small></a></p>
 
@@ -27,7 +39,7 @@
           <li><a href="https://github.com/AndriusA/RILAnalyzer">View On <strong>GitHub</strong></a></li>
         </ul>
       </header>
-      <section>
+      <section class="col-lg-7">
         <h3>Welcome to RILAnalyzer Page.</h3>
 
 <p>Modern smartphone platforms add new challenges for the cellular networks they are running on. Equally though, complexity of cellular networks is hard to deal with for application and system developers, worsening each other's performance and efficiency. Such difficulties are largely caused by the lack of cross-layer understanding of interactions between different entities - applications, devices, the network and its management plane.</p>
@@ -84,10 +96,16 @@ $ adb shell
       </section>
       <footer>
         <p>The public page is maintained by <a href="https://github.com/AndriusA">AndriusA</a></p>
-        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
       </footer>
     </div>
     <script src="javascripts/scale.fix.js"></script>
     
+    <!-- JavaScript plugins (requires jQuery) -->
+    <script src="http://code.jquery.com/jquery.js"></script>
+    <!-- Include all compiled plugins (below), or include individual files as needed -->
+    <script src="javascripts/bootstrap.min.js"></script>
+
+    <!-- Optionally enable responsive features in IE8 -->
+    <script src="javascripts/respond.min.js"></script>
   </body>
 </html>
