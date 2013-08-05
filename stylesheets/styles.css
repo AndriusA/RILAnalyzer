@@ -253,3 +253,7 @@ footer {
     color:#444;
   }
 }
+
+#team .row {
+  padding-bottom: 20px;
+}

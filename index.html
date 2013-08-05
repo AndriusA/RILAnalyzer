@@ -21,8 +21,8 @@
       <ul class="nav navbar-nav">
         <li class="active"><a href="#">Home</a></li>
         <li><a href="#">Results</a></li>
-        <li><a href="#">Analyze your data</a></li>
-        <li><a href="#">People</a></li>
+        <li><a href="analyze.html">Analyze your data</a></li>
+        <li><a href="people.html">People</a></li>
       </ul>
     </div>
 
@@ -39,60 +39,61 @@
           <li><a href="https://github.com/AndriusA/RILAnalyzer">View On <strong>GitHub</strong></a></li>
         </ul>
       </header>
-      <section class="col-lg-7">
+      <section class="col-lg-8">
         <h3>Welcome to RILAnalyzer Page.</h3>
 
-<p>Modern smartphone platforms add new challenges for the cellular networks they are running on. Equally though, complexity of cellular networks is hard to deal with for application and system developers, worsening each other's performance and efficiency. Such difficulties are largely caused by the lack of cross-layer understanding of interactions between different entities - applications, devices, the network and its management plane.</p>
+        <p>Modern smartphone platforms add new challenges for the cellular networks they are running on. Equally though, complexity of cellular networks is hard to deal with for application and system developers, worsening each other's performance and efficiency. Such difficulties are largely caused by the lack of cross-layer understanding of interactions between different entities - applications, devices, the network and its management plane.</p>
 
-<p>To address the issue, we are releasing RILAnalyzer publicly. It is a tool that provides mechanisms to perform network analysis from within a mobile device. RILAnalyzer is capable of recording low-level radio information and accurate cellular network control-plane data, as well as user-plane data. Such data can be used to identify previously overlooked network and connectivyt management issues and infer how the different configurations interact with application logic, causing network and energy overheads.</p>
+        <p>To address the issue, we are releasing RILAnalyzer publicly. It is a tool that provides mechanisms to perform network analysis from within a mobile device. RILAnalyzer is capable of recording low-level radio information and accurate cellular network control-plane data, as well as user-plane data. Such data can be used to identify previously overlooked network and connectivyt management issues and infer how the different configurations interact with application logic, causing network and energy overheads.</p>
 
-<p>We are planning to release full source codes soon. For now it can be used as a binary tool - we provide schema of the data logged for personal analysis.</p>
+        <p>We are planning to release full source codes soon. For now it can be used as a binary tool - we provide schema of the data logged for personal analysis.</p>
 
-<h3>What's the point?</h3>
+        <h3>What's the point?</h3>
 
-<p>The point is obtaining ground-truth about network configuration and its effects on the devices.</p>
+        <p>The point is obtaining ground-truth about network configuration and its effects on the devices.</p>
 
-<p>Research community has been exploring the relationship between radio network management and device energy consumption for a while, but it is very hard to propose working solutions in the general case:</p>
+        <p>Research community has been exploring the relationship between radio network management and device energy consumption for a while, but it is very hard to propose working solutions in the general case:</p>
 
-<img src="https://raw.github.com/AndriusA/RILAnalyzer/gh-pages/img/energy-network.png" alt="radio state management and energy consumption overheads" />
+        <img src="https://raw.github.com/AndriusA/RILAnalyzer/gh-pages/img/energy-network.png" alt="radio state management and energy consumption overheads" />
 
-<p>RILAnalyzer helps to infer the main network parameters to understand such inefficiencies. We will provide more details once our research work is published.</p>
+        <p>RILAnalyzer helps to infer the main network parameters to understand such inefficiencies. We will provide more details once our research work is published.</p>
 
-<h3>Installation instructions</h3>
+        <h3>Installation instructions</h3>
 
-You will need a rooted device to install the software. We tested it on Samsung Galaxy SII using CyanogenMod 10.1.
+        <p>You will need a rooted device to install the software. We tested it on Samsung Galaxy SII using CyanogenMod 10.1.</p>
 
-To install the user-plane part of the logger, do:
-<pre><code>
-$ cd your_repo_root/RILAnalyzer
-$ adb install NetworkLog.apk
-</code></pre>
+        <p>To install the user-plane part of the logger, do:</p>
 
-<p>Installing the control-plane logger is a little more complex at the moment, as it needs to be installed as a system service:
-</p>
-<pre><code>
-$ cd your_repo_root/RILAnalyzer
-$ adb push SamsungServiceMode.apk /sdcard/
-$ adb shell
-# mount -o rw,remount /system
-# cp /system/app/SamsungServiceMode.apk /system/app/SamsungServiceMode.apk-backup
-# cp /sdcard/SamsungServiceMode.apk /system/app/
-# mount -o ro,remount /system
-</code></pre>
+        <pre><code>
+        $ cd your_repo_root/RILAnalyzer
+        $ adb install NetworkLog.apk
+        </code></pre>
 
-<p>Now go to NetworkLog application and press the button to start logging. It will start logging all of your network data locally on your sdcard, but will not send in anywhere.</p>
+        <p>Installing the control-plane logger is a little more complex at the moment, as it needs to be installed as a system service:</p>
+        
+        <pre><code>
+        $ cd your_repo_root/RILAnalyzer
+        $ adb push SamsungServiceMode.apk /sdcard/
+        $ adb shell
+        # mount -o rw,remount /system
+        # cp /system/app/SamsungServiceMode.apk /system/app/SamsungServiceMode.apk-backup
+        # cp /sdcard/SamsungServiceMode.apk /system/app/
+        # mount -o ro,remount /system
+        </code></pre>
 
-<p>Reboot the phone to start logging control-plane data. Data-plane logging will restart automatically.</p>
+        <p>Now go to NetworkLog application and press the button to start logging. It will start logging all of your network data locally on your sdcard, but will not send in anywhere.</p>
 
-<h3>Authors and Contributors</h3>
+        <p>Reboot the phone to start logging control-plane data. Data-plane logging will restart automatically.</p>
 
-<p>Authors of the project are:
-<a href="https://github.com/narseo" class="user-mention">@narseo</a>,
-<a href="https://github.com/AndriusA" class="user-mention">@AndriusA</a>,
-<a href="https://github.com/ravens" class="user-mention">@ravens</a>,
-<a href="https://github.com/4knahs" class="user-mention">@4knahs</a>, 
-<a href="http://people.tid.es/dina.papagiannaki/" class="user-mention">Konstantina Papagiannaki</a> and 
-<a href="http://www.cl.cam.ac.uk/~jac22/" class="user-mention">Jon Crowcroft</a></p>
+        <h3>Authors and Contributors</h3>
+
+        <p>Authors of the project are:
+        <a href="https://github.com/narseo" class="user-mention">@narseo</a>,
+        <a href="https://github.com/AndriusA" class="user-mention">@AndriusA</a>,
+        <a href="https://github.com/ravens" class="user-mention">@ravens</a>,
+        <a href="https://github.com/4knahs" class="user-mention">@4knahs</a>, 
+        <a href="http://people.tid.es/dina.papagiannaki/" class="user-mention">Konstantina Papagiannaki</a> and 
+        <a href="http://www.cl.cam.ac.uk/~jac22/" class="user-mention">Jon Crowcroft</a></p>
       </section>
       <footer>
         <p>The public page is maintained by <a href="https://github.com/AndriusA">AndriusA</a></p>
