@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="chrome=1">
-    <title>RILAnalyzer - your data</title>
+    <title>RILAnalyzer - Results</title>
 
     <link rel="stylesheet" href="stylesheets/styles.css">
     <link rel="stylesheet" href="stylesheets/pygment_trac.css">
@@ -17,11 +17,11 @@
   <body>
 
     <div class="navbar navbar-fixed-top">
-      <a class="navbar-brand" href="/">RILAnalyzer</a>
+      <a class="navbar-brand" href="#">RILAnalyzer</a>
       <ul class="nav navbar-nav">
         <li><a href="/">Home</a></li>
-        <li><a href="results.html">Results</a></li>
-        <li class="active"><a href="#">Analyze your data</a></li>
+        <li class="active"><a href="results.html">Results</a></li>
+        <li><a href="analyze.html">Analyze your data</a></li>
         <li><a href="people.html">People</a></li>
       </ul>
     </div>
@@ -45,39 +45,18 @@
         </div>
       </header>
       <section class="col-lg-8">
-        <h3>Analyze your data</h3>
 
-        <p> We do not automatically upload the data collected by our tool to give you the freedom of preserving your privacy. Your participation is completely voluntary but greatly appreciated!
-        </p>
+        <h3>Results</h3>
+        <p>Zoomable time-series of the recorded traffic</p>
 
-        <p><strong>What do you get?</strong> We give you the full analysis of your data using our methodology, as well as comparison against a large body of other users. You can see how well your applications and your network performs and what wastes most of your energy.</p>
+        <p>Connected energy graph based on the time interval and RNC states</p>
 
-        <form>
-          <fieldset>
-            <legend>Upload your log files</legend>
-            <div class="form-group">
-              <label for="exampleInputEmail">Email address</label>
-              <input type="text" class="form-control" id="exampleInputEmail" placeholder="Enter email">
-              <p class="help-block">If you want us to send us your personalized analysis</p>
-            </div>
-            <div class="form-group">
-              <label for="exampleInputFile">RIL log</label>
-              <input type="file" id="rilLog">
-              <p class="help-block">The file located in "/sdcard/ril_log.txt"</p>
-            </div>
-            <div class="form-group">
-              <label for="exampleInputFile">Network log</label>
-              <input type="file" id="rilLog">
-              <p class="help-block">The file located in "/sdcard/networklog.txt"</p>
-            </div>
-            <div class="checkbox">
-              <label>
-                <input type="checkbox" checked> Send me my results
-              </label>
-            </div>
-            <button type="submit" class="btn btn-default">Submit</button>
-          </fieldset>
-        </form>
+        <p>Heatmap of where your traffic goes to</p>
+
+        <p>Observed RNC transitions state machine?</p>
+
+        <p>Application traffic volume + frequency per application</p>
+
       </section>
       <footer>
         <p>The public page is maintained by <a href="https://github.com/AndriusA">AndriusA</a></p>
