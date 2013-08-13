@@ -47,7 +47,10 @@
       <section class="col-lg-8">
 
         <h3>Results</h3>
-        <p>Zoomable time-series of the recorded traffic</p>
+
+        <div id="traffic-timeSeries">
+          Zoomable time-series of the recorded traffic
+        </div>
 
         <p>Connected energy graph based on the time interval and RNC states</p>
 
@@ -68,6 +71,10 @@
     <script src="http://code.jquery.com/jquery.js"></script>
     <!-- Include all compiled plugins (below), or include individual files as needed -->
     <script src="javascripts/bootstrap.min.js"></script>
+
+    <script src="javascripts/d3.min.js"></script>
+    <script src="javascripts/cubism.v1.min.js"></script>
+    <script src="javascripts/viz-trafficTimeSeries.js"></script>
 
     <!-- Optionally enable responsive features in IE8 -->
     <script src="javascripts/respond.min.js"></script>

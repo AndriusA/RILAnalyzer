@@ -1,15 +1,4 @@
 Options +FollowSymLinks
 RewriteEngine on
-# Remove trailing slashes.
-# e.g. example.com/foo/ will redirect to example.com/foo
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^(.+)/$ /$1 [R=permanent,QSA]
- 
-# Redirect to HTML if it exists.
-# e.g. example.com/foo will display the contents of example.com/foo.html
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteCond %{REQUEST_FILENAME}.html -f
-RewriteRule ^(.+)$ $1.html [L,QSA]
-
-RewriteRule /upload/ http://localhost:3000/$1 [P]
+# Simple URL redirect:
+RewriteRule ^upload$ http://rilanalyzer.smart-e.org:3000/upload/ [P]
