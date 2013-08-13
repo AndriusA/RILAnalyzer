@@ -11,11 +11,12 @@ app.post("/upload", function (request, response) {
     // keyed by the input name (in this case, "file")                                            
 
     // show the uploaded file name
-    console.log("file name", request.files.file.name);
-    console.log("file path", request.files.file.path);
     console.log("request");
     console.log(request)
-
+    console.log("body", request.body)
+    console.log("file name", request.files.file.name);
+    console.log("file path", request.files.file.path);
+    
     response.end("upload complete");
 });                                                                                              
 

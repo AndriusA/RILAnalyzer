@@ -52,7 +52,7 @@
 
         <p><strong>What do you get?</strong> We give you the full analysis of your data using our methodology, as well as comparison against a large body of other users. You can see how well your applications and your network performs and what wastes most of your energy.</p>
 
-        <form action="http://rilanalyzer.smart-e.org:3000/upload-traces/" id="upload_form" method="post">
+        <form action="http://rilanalyzer.smart-e.org:3000/upload-traces/" id="upload_form" method="post" enctype="multipart/form-data">
           <fieldset>
             <legend>Upload your log files</legend>
             <div class="form-group">
@@ -61,13 +61,13 @@
               <p class="help-block">If you want us to send you your personalized analysis</p>
             </div>
             <div class="form-group">
-              <label for="rilLog" validate="required">RIL log</label>
-              <input type="file" id="rilLog">
+              <label for="rilLog">RIL log</label>
+              <input type="file" name="rilLog" id="rilLog">
               <p class="help-block">The file located in "/sdcard/ril_log.txt"</p>
             </div>
             <div class="form-group">
-              <label for="netLog" validate="required">Network log</label>
-              <input type="file" id="netLog">
+              <label for="netLog">Network log</label>
+              <input type="file" name="netLog" id="netLog">
               <p class="help-block">The file located in "/sdcard/networklog.txt"</p>
             </div>
             <div class="checkbox">
