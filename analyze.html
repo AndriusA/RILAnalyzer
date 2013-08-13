@@ -52,22 +52,22 @@
 
         <p><strong>What do you get?</strong> We give you the full analysis of your data using our methodology, as well as comparison against a large body of other users. You can see how well your applications and your network performs and what wastes most of your energy.</p>
 
-        <form>
+        <form action="upload-traces.php" id="upload_form" method="post">
           <fieldset>
             <legend>Upload your log files</legend>
             <div class="form-group">
-              <label for="exampleInputEmail">Email address</label>
-              <input type="text" class="form-control" id="exampleInputEmail" placeholder="Enter email">
-              <p class="help-block">If you want us to send us your personalized analysis</p>
+              <label for="inputEmail">Email address</label>
+              <input type="text" class="form-control" id="inputEmail" name="inputEmail" placeholder="Enter email" validate="email">
+              <p class="help-block">If you want us to send you your personalized analysis</p>
             </div>
             <div class="form-group">
-              <label for="exampleInputFile">RIL log</label>
+              <label for="rilLog" validate="required">RIL log</label>
               <input type="file" id="rilLog">
               <p class="help-block">The file located in "/sdcard/ril_log.txt"</p>
             </div>
             <div class="form-group">
-              <label for="exampleInputFile">Network log</label>
-              <input type="file" id="rilLog">
+              <label for="netLog" validate="required">Network log</label>
+              <input type="file" id="netLog">
               <p class="help-block">The file located in "/sdcard/networklog.txt"</p>
             </div>
             <div class="checkbox">
@@ -89,7 +89,12 @@
     <script src="http://code.jquery.com/jquery.js"></script>
     <!-- Include all compiled plugins (below), or include individual files as needed -->
     <script src="javascripts/bootstrap.min.js"></script>
-
+    <!-- bootstrap validation from https://github.com/Alex014/bootstrap.validate -->
+    <script src="javascripts/bootstrap.validate.js"></script>
+    <script src="javascripts/bootstrap.validate.en.js"></script>
+    <script>
+      $('#upload_form').bt_validate();
+    </script>
     <!-- Optionally enable responsive features in IE8 -->
     <script src="javascripts/respond.min.js"></script>
   </body>
