@@ -3,7 +3,7 @@ var express = require("express"),
 
 // tell express to use the bodyParser middleware                                                 
 // and set upload directory                                                                      
-app.use(express.bodyParser({ keepExtensions: true, uploadDir: "uploads" }));                     
+app.use(express.bodyParser({ keepExtensions: true, uploadDir: "upload" }));                     
 app.engine('jade', require('jade').__express);
 app.set('view engine', 'jade');
 app.set('views', __dirname);
