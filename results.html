@@ -5,6 +5,7 @@
     <meta http-equiv="X-UA-Compatible" content="chrome=1">
     <title>RILAnalyzer - Results</title>
 
+    <!-- <link rel="stylesheet" href="stylesheets/cubism.css"> -->
     <link rel="stylesheet" href="stylesheets/styles.css">
     <link rel="stylesheet" href="stylesheets/pygment_trac.css">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -13,6 +14,29 @@
     <!--[if lt IE 9]>
     <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
     <![endif]-->
+    <style>
+    svg {
+      font: 10px sans-serif;
+    }
+
+    path {
+      fill: steelblue;
+    }
+
+    .axis path,
+    .axis line {
+      fill: none;
+      stroke: #000;
+      shape-rendering: crispEdges;
+    }
+
+    .brush .extent {
+      stroke: #fff;
+      fill-opacity: .125;
+      shape-rendering: crispEdges;
+    }
+
+    </style>
   </head>
   <body>
 
@@ -48,7 +72,7 @@
 
         <h3>Results</h3>
 
-        <div id="traffic-timeSeries">
+        <div id="traffic-timeSeries" width="80%">
           Time-series of the recorded traffic
         </div>
 
@@ -72,7 +96,7 @@
     <!-- Include all compiled plugins (below), or include individual files as needed -->
     <script src="javascripts/bootstrap.min.js"></script>
 
-    <script src="javascripts/d3.min.js"></script>
+    <script src="http://d3js.org/d3.v3.min.js"></script>
     <script src="javascripts/cubism.v1.min.js"></script>
     <script src="javascripts/viz-trafficTimeSeries.js"></script>
 
