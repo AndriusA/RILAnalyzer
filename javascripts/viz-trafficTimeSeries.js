@@ -1,8 +1,8 @@
 var margin = {top: 10, right: 10, bottom: 100, left: 40},
-    margin2 = {top: 430, right: 10, bottom: 20, left: 40},
-    width = 860 - margin.left - margin.right,
-    height = 500 - margin.top - margin.bottom,
-    height2 = 500 - margin2.top - margin2.bottom;
+    margin2 = {top: 330, right: 10, bottom: 20, left: 40},
+    width = $("#traffic-timeSeries").width() - margin.left - margin.right,
+    height = 400 - margin.top - margin.bottom,
+    height2 = 400 - margin2.top - margin2.bottom;
 
 var parseDate = d3.time.format("%b %Y").parse;
 
@@ -20,16 +20,16 @@ var brush = d3.svg.brush()
     .on("brush", brushed);
 
 var area = d3.svg.area()
-    .interpolate("monotone")
-    .x(function(d) { return x(d.date); })
+    .interpolate("step")
+    .x(function(d) { return x(d.key); })
     .y0(height)
-    .y1(function(d) { return y(d.length); });
+    .y1(function(d) { return y(d.values.volume); });
 
 var area2 = d3.svg.area()
-    .interpolate("monotone")
-    .x(function(d) { return x2(d.date); })
+    .interpolate("step")
+    .x(function(d) { return x2(d.key); })
     .y0(height2)
-    .y1(function(d) { return y2(d.length); });
+    .y1(function(d) { return y2(d.values.volume); });
 
 var svg = d3.select("#traffic-timeSeries").append("svg")
     .attr("width", width + margin.left + margin.right)
@@ -47,15 +47,63 @@ var focus = svg.append("g")
 var context = svg.append("g")
     .attr("transform", "translate(" + margin2.left + "," + margin2.top + ")");
 
-d3.csv("networklog.txt", function(error, data) {
+function sortByKey(a, b) {
+    if (a.key < b.key)
+        return -1;
+    if (a.key > b.key)
+        return 1;
+    return 0;
+}
 
-  data.forEach(function(d) {
-    d.date = new Date(d.date);
-    d.length = +d.length;
-  });
+d3.csv("networklog.csv", function(error, csv) {
 
-  x.domain(d3.extent(data.map(function(d) { return d.date; })));
-  y.domain([0, d3.max(data.map(function(d) { return d.length; }))]);
+  // csv.forEach(function(d) {
+  //   d.date = new Date(parseInt(d.time));
+  //   d.packetLength = +d.packetLength;
+  // });
+
+  var data=d3.nest()
+    .key(function(d) {return d.date;})
+    .sortKeys(d3.ascending)
+    .rollup(function(d){
+        return {
+            volume: d3.sum(d, function(g) { return +g.packetLength;})
+        }
+    })
+    .entries(csv)
+    .filter(function(d) {return d.key !== "Invalid Date"});
+
+    // Add points where traffic is zero for correct interpolation
+    var newData = [];
+    if (data.length > 0) {
+      var previousdate = data[0].key;
+      data.forEach(function(row) {
+        if(row.key !== previousdate){
+            var newKeyStart = parseInt(previousdate) + 1000;
+            if (newKeyStart < parseInt(row.key)) {
+                newData.push({ 
+                    key: newKeyStart.toString(),
+                    values: {volume: 0},
+                });
+            }
+            var newKeyEnd = parseInt(row.key) - 1000;
+            if (newKeyEnd > parseInt(previousdate)) {
+                newData.push({ 
+                    key: newKeyEnd.toString(),
+                    values: {volume: 0},
+                });
+            }
+            previousdate = row.key;
+        }
+      })
+      console.log(data);
+    }
+
+    var data = data.concat(newData).sort(sortByKey);
+    console.log(data);
+
+  x.domain(d3.extent(data.map(function(d) { return d.key; })));
+  y.domain([0, d3.max(data.map(function(d) { return d.values.volume; }))]);
   x2.domain(x.domain());
   y2.domain(y.domain());
 
