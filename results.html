@@ -72,17 +72,61 @@
 
         <h3>Results</h3>
 
-        <div id="traffic-timeSeries" width="80%">
-          Time-series of the recorded traffic
+        <p>On a wired network, the transmissions of traffic can be assumed to be free. However on cellular networks, a new transmission is accompanied by channel signalling overhead, necessary for radio resource management. So, a little bit of background here.</p>
+
+        <hr>
+        <div class="row">
+          <figure class="col-lg-6">
+            <img src="img/umtsNetwork.jpg" alt="UMTS network">
+            <figcaption>Basic 3G/UMTS network architecure (from Cisco)</figcaption>
+          </figure>
+          <figure class="col-lg-6">
+            <img src="img/powerStates.png" alt="RNC power states">
+            <figcaption>UMTS RNC power states and transitions between them</figcaption>
+          </figure>
         </div>
+        <hr>
 
-        <p>Connected energy graph based on the time interval and RNC states</p>
+        <p>Among all the network elements present on an UMTS network illustrated in the first figure above, the RNC plays a fundamental role managing the spectrum and the UE (User Equipment - e.g. the mobile device). Efficient use of the limited radio channels is critical for the operator as well as the final user, as it is a shared channel with limited capacity. The UMTS standard defines three basic power modes as shown in the second figure: <em>IDLE</em> that corresponds to no connection; <em>CELL_DCH</em> (Dedicated Channel, simplified as DCH) the highest power state with highest throughput and lowest latency; and <em>CELL_FACH</em> (Forward Access Channel, FACH), a low capacity, high latency channel shared across all the mobile users. With the time and successive evolutions, a new optional channel known as <em>CELL_PCH</em> (Cell Paging Channel, PCH) has been introduced between IDLE and FACH. This channel is used to enable paging the user equipment at a lower energy cost than FACH.  For the purposes of this paper, if an app in the background causes a device to be promoted to a high power state like DCH or FACH, then we can attribute energy consumption and signaling traffic to that app.</p>
 
-        <p>Heatmap of where your traffic goes to</p>
+        <p>The promotions between the states are governed by traffic demand, whereas the demotions are controlled by inactivity timeouts, unofficially referred to as <em>T1</em> (DCH to FACH), <em>T2</em> (FACH to PCH) and <em>T3</em> (PCH to IDLE). Often times, the configuration of the inactivity timers can lead to energy waste on some devices as the devices remain on a high power state before they expire. This has been coined as the <em>tail-energy</em> and has motivated the standardization of <a href="http://www.gsma.com/newsroom/wp-content/uploads/2012/03/ts18v10tsgprdfastdormancybestpractices.pdf">Fast Dormancy</a> by the GSM Alliance. Fast-dormancy allows the handset to inform the network of the lack of traffic activity so it can be immediately demoted to PCH.
 
-        <p>Observed RNC transitions state machine?</p>
+        <p>So what are the actual costs of these RNC promotions? The figure below illustrates.</p>
 
-        <p>Application traffic volume + frequency per application</p>
+        <hr>
+        <div class="row">
+          <div class="col-lg-2"></div>
+          <figure class="col-lg-8">
+            <img src="img/energySignalling.png" alt="RNC energy and signaling">
+            <figcaption>UMTS current drain trace correlated with signaling and user-plane traffic</figcaption>
+          </figure>
+        </div>
+        <hr>
+
+        <p>This figure provides a complete view of network signaling traffic and energy used by a mobile device during an example data transmission event (in a network supporting Fast Dormancy). At <em>t=4</em>, an inbound packet from the Internet triggers a signalling event (paging) that powers up the radio of the phone, first in FACH, and then immediately in DCH. Once the channel is allocated, traffic is transmitted. During the whole cycle the energy consumed is high and signaling traffic is generated even during the tail time. The reason is that the mobile device needs to send measurement reports every 0.5-1 seconds to update the tower about its state. These reports can be piggybacked on data traffic and are thus not as visible during the actual transfer. Once the inactivity timeout T1 expires, the device is demoted to FACH and immediately to PCH as the device supports Fast dormancy.<p>
+
+        <p>Now the important part: <strong>how well do current applications and smartphone platforms interact with the cellular networks?</strong> The short answer is not great at all:</p>
+
+        <hr>
+        <div class="row">
+          <figure class="col-lg-6">
+            <img src="img/ecdfApps.png" alt="inter-RNC promotion time ECDF">
+            <figcaption>Empirical CDF of inter-RNC promotion time</figcaption>
+          </figure>
+          <figure class="col-lg-6">
+            <img src="img/distAppsPerProm.png" alt="Apps per promotion">
+            <figcaption>The number of different applications per separate RNC promotion</figcaption>
+          </figure>
+        </div>
+        <hr>
+
+        <p>As we have seen above, network traffic causes RNC state promotions. Experiments with some of the most popular apps (Skype, WhatsApp, Facebook and Google Cloud Messaging which powers Hangouts, GMail and all apps that use it as a channel for push notifications) show very different time intervals between promotions caused by them that are not coordinated at all: the intervals are completely different for the different apps and in 90% of cases there is only one or two apps active in a single promotion. Although this is biased by Skype, as its traffic is seen in most promotions - without it the proportion of promotions with only one app active would be even higher.</p>
+
+        <p>Skype here is especially bad due to its P2P nature: RNC promotions are triggered every 30 seconds on average to maintain connections with other users. In addition, it relies on distributed services to monitor QoS, billing, and to guarantee reachability and resilience. As much as 74% of connections are directly to other peers although surprisingly they only account for 57% of packets. Google’s GCM, on the other hand, aggregates notifications for multiple applications (Google’s own and ones that use it for push notifications) reducing the amortized cost for each application - only one open TCP connection is needed to a single service. Nevertheless, the proportion of 2 apps/promotion vs only 1 app increases when we include GCM traffic, suggesting that it is mainly used as a signaling channel that triggers applications to fetch content themselves.</p>
+
+        
+        <hr>
+        <p>You can find more details in <a href="rilanalyzer.pdf">our paper</a> that is to appear in <a href="http://conferences.sigcomm.org/imc/2013/">IMC 2013 this October in Barcelona</a>. In the paper we look in more detail at the differences between network configurations, effects of distributed applications' backends and poor uses of TCP.</p>
 
       </section>
       <footer>

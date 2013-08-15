@@ -257,3 +257,7 @@ footer {
 #team .row {
   padding-bottom: 20px;
 }
+
+figcaption {
+  text-align: center;
+}
