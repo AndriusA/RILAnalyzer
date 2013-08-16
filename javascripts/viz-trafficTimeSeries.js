@@ -218,7 +218,7 @@ $(function(){
     // Chart dimensions.
     var margin = {top: 30, right: 50, bottom: 30, left: 40},
         width =  $("#promotionsApps-bubble").width() - margin.left - margin.right,
-        height = 500 - margin.top - margin.bottom;
+        height = 400 - margin.top - margin.bottom;
 
     // Various scales. Need to set domain after loading data
     var xScale = d3.scale.log().range([0, width]),
