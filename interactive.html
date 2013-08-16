@@ -23,11 +23,22 @@
       fill: steelblue;
     }
 
+    .label {
+      font: 12px sans-serif;
+    }
+
     .axis path,
     .axis line {
       fill: none;
       stroke: #000;
       shape-rendering: crispEdges;
+    }
+
+    .rotate text {
+      padding-top: 20px;
+      transform: rotate(-45deg);
+      -ms-transform:rotate(-45deg); /* IE 9 */
+      -webkit-transform:rotate(-45deg); /* Safari and Chrome */
     }
 
     .brush .extent {
@@ -73,17 +84,15 @@
 
         <h3>Results</h3>
 
-        <div id="traffic-timeSeries" width="80%">
-          Time-series of the recorded traffic
+        <div id="traffic-timeSeries">
         </div>
 
-        <p>Connected energy graph based on the time interval and RNC states</p>
+        <div id="promotionsApps-bubble">
+        </div>
 
         <p>Heatmap of where your traffic goes to</p>
 
         <p>Observed RNC transitions state machine?</p>
-
-        <p>Application traffic volume + frequency per application</p>
 
 
       </section>
@@ -97,6 +106,7 @@
     <script src="http://code.jquery.com/jquery.js"></script>
     <!-- Include all compiled plugins (below), or include individual files as needed -->
     <script src="javascripts/bootstrap.min.js"></script>
+    <script src="javascripts/lodash.min.js"></script>
 
     <script src="http://d3js.org/d3.v3.min.js"></script>
     <script src="javascripts/cubism.v1.min.js"></script>

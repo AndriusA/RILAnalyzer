@@ -1,4 +1,4 @@
-date,time2,AppName,ProcName,inIface,outIface,proto,src,dest,srcPort,destPort,packetLength,seqNumber,na1,na2,na3,na4,fin,syn,na5,na6,ack
+date,time2,appName,ProcName,inIface,outIface,proto,src,dest,srcPort,destPort,packetLength,seqNumber,na1,na2,na3,na4,fin,syn,na5,na6,ack
 1367004991176,1367004991176,Maps,com.google.android.apps.maps,rmnet0,,TCP,173.194.69.147,10.139.202.228,443,58200,52,6131,5178,1002,0,8,1,0,0,0,1,0,0,0
 1367004991176,1367004990178,Maps,com.google.android.apps.maps,,rmnet0,TCP,10.139.202.228,173.194.69.147,58200,443,64,5178,6131,524,0,11,0,0,0,0,1,0,0,0
 1367004991176,1367004991176,Maps,com.google.android.apps.maps,rmnet0,,TCP,173.194.69.147,10.139.202.228,443,58200,52,6131,5178,1002,0,8,1,0,0,0,1,0,0,0
