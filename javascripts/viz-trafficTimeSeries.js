@@ -312,8 +312,16 @@ $(function(){
                 .sort(order);
 
         // Add a title.
-        dot.append("title")
-            .text(function(d) { return d.key; });
+        var text = area.append("g")
+            .selectAll(".dotLabel")
+                .data(appData)
+            .enter().append("text")
+                .attr("class", "dotLabel")
+                .attr("text-anchor", "middle")
+                .attr("fill", "black")
+                .attr("x", function(d) { console.log(d); return xScale(x(d)) })
+                .attr("y", function(d) { return yScale(y(d)) })
+                .text(function(d) { return d.key; });
 
         // Positions the dots based on data.
         function position(dot) {
