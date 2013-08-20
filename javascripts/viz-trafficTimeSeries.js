@@ -1,6 +1,6 @@
 // Traffic and energy area plot
-function TrafficChart() {
-    var margin = {top: 150, right: 50, bottom: 30, left: 50},  // main graph
+function TrafficChart(trafficDataModel) {
+    var margin = {top: 170, right: 50, bottom: 30, left: 50},  // main graph
         margin2 = {top: 30, right: 50, bottom: 30, left: 50},   // zoomable chart
         width = $("#traffic-timeSeries").width() - margin.left - margin.right,
         height = 400 - margin.top - margin.bottom,  // main graph
@@ -59,10 +59,19 @@ function TrafficChart() {
     svg.append("text")
         .attr("class", "y label")
         .attr("text-anchor", "center")
-        .attr("y", 8)
+        .attr("y", height2 + margin2.top + height/2 + 20)
+        .attr("x", width+20)
         .attr("dy", "1.25em")
-        .attr("transform", "translate(" + width*1.02 + ", " + height/2 + ")")
         .text("RNC State");
+
+    // Y axis label
+    svg.append("text")
+        .attr("class", "y label")
+        .attr("text-anchor", "center")
+        .attr("dy", "1.25em")
+        .attr("x", 0)
+        .attr("y", margin.top-20)
+        .text("Data Volume");
 
     yAxis3.tickValues([1, 40, 100]).tickFormat(function(d, i){
         if (d ===  40)
@@ -100,15 +109,6 @@ function TrafficChart() {
             .attr("class", "y axis")
             .call(yAxis);
 
-        // Y axis label
-        svg.append("text")
-            .attr("class", "y label")
-            .attr("text-anchor", "center")
-            .attr("y", 8)
-            .attr("dy", "1.25em")
-            .attr("transform", "translate(0)")
-            .text("Data Volume");
-
         context.append("path")
             .datum(data)
             .attr("d", area2);
@@ -139,19 +139,30 @@ function TrafficChart() {
             .style("stroke", "orange");
     }
 
+    var anotherChart = undefined;
+
+    this.bindChartTimeframe =  function(chart) {
+        console.log("binding");
+        console.log(this);
+        anotherChart = chart;
+    }
+
     function brushed() {
         x.domain(brush.empty() ? x2.domain() : brush.extent());
+        if (! _.isUndefined(anotherChart)) {
+            anotherChart.adjustTimeframe(x.domain());
+        }
         focus.select("#dataChart").attr("d", area);
         focus.select("#rncChart").attr("d", area3);
         focus.select(".x.axis").call(xAxis);
     }
 
-    this.bindTrafficData = useTrafficData;
+    useTrafficData(trafficDataModel.getTrafficData());
     this.bindRilData = useRilData;
 }
 
 
-function AppBubbleChart() {
+function AppBubbleChart(dataModel) {
     // Various accessors that specify the four dimensions of data to visualize.
     function x(d) { return d.values.volume; }
     function y(d) { return d.values.packets; }
@@ -206,47 +217,60 @@ function AppBubbleChart() {
         .attr("y", margin.top+20)
         .text("Promotions (radius) per app");
 
-    function useTrafficData(appData) {
+     // Add the x-axis.
+    area.append("g")
+        .attr("class", "x axis rotate")
+        .attr("transform", "translate(0," + height + ")")
+        .call(xAxis);
+
+    // Add the y-axis.
+    area.append("g")
+        .attr("class", "y axis")
+        .call(yAxis);
+
+    initTrafficData(dataModel.getAppData());
+
+    function initTrafficData(appData) {
+        console.log("appData - useTrafficData", appData);
         xScale.domain( d3.extent(appData.map(function(d) { return d.values.volume; })) );
-        yScale.domain( d3.extent(appData.map(function(d) { return d.values.packets; })) );
+        yScale.domain( [1, d3.max(appData.map(function(d) { return d.values.packets; }))] );
         radiusScale.domain([0, d3.max(appData.map(function(d) { return d.values.promotions; }))])
-
-        // xAxis.tickValues([1, 10, 100, 1000, 10000, 100000]).tickFormat(d3.format("d"));
         xAxis.tickFormat(d3.format("d"));
+        useTrafficData(appData);
+        console.log("asd");
+    }
 
-        // Add the x-axis.
-        area.append("g")
-            .attr("class", "x axis rotate")
-            .attr("transform", "translate(0," + height + ")")
-            .call(xAxis);
-
-        // Add the y-axis.
-        area.append("g")
-            .attr("class", "y axis")
-            .call(yAxis);
-
+    function useTrafficData(appData) {
         // Add a dot per app
         var dot = area.append("g")
                 .attr("class", "dots")
             .selectAll(".dot")
-                .data(appData)
-            .enter().append("circle")
+                .data(appData, function(d) { return d.key; })
+
+        dot.enter().append("circle")
                 .attr("class", "dot")
                 .style("fill", function(d) { return colorScale(color(d)); })
+                .style("opacity", "80%")
                 .call(position)
-                .sort(order);
+                .sort(order)
+                .call(function(d){console.log("entering circle, ", d)})
+
+        dot.exit().call(function(d){console.log("removing circle, ", d)}).remove();
 
         // Add a title.
         var text = area.append("g")
             .selectAll(".dotLabel")
-                .data(appData)
-            .enter().append("text")
+                .data(appData, function(d) { return d.key; });
+
+        text.enter().append("text")
                 .attr("class", "dotLabel")
                 .attr("text-anchor", "middle")
                 .attr("fill", "black")
                 .attr("x", function(d) { console.log(d); return xScale(x(d)) })
                 .attr("y", function(d) { return yScale(y(d)) })
                 .text(function(d) { return d.key; });
+
+        text.exit().remove();
 
         // Positions the dots based on data.
         function position(dot) {
@@ -261,49 +285,60 @@ function AppBubbleChart() {
         }
     }
 
-    this.bindTrafficData = useTrafficData;
+
+
+    this.adjustTimeframe = function(timeframe){
+        console.log("adjusting bubblechart to", timeframe);
+        var timeStart = Date.parse(timeframe[0]);
+        var timeEnd = Date.parse(timeframe[1]);
+        useTrafficData(dataModel.getAppData(timeStart, timeEnd));
+        // dataModel.getAppData(timeStart, timeEnd);
+    }
 }
 
-function bindData(trafficChart, appBubbleChart) {
+function TrafficDataModel() {
+    var rawTrafficData = undefined;
+
+    var appData = [];
+    var trafficData = [];
+
     function sortByKey(a, b) {
         if (a.key < b.key)
             return -1;
         if (a.key > b.key)
             return 1;
         return 0;
+    };
+
+    this.readData = function(filename, continuation) {
+        d3.csv(filename, function(error, csv) {
+            rawTrafficData = csv;
+            continuation();
+        });
     }
 
-    d3.csv("data/trafficEvents.txt", function(error, csv) {
-        var data=d3.nest()
-            .key(function(d) {return d.TIME;})
+    this.getTrafficData = function(timeStart, timeEnd) {
+        //FIXME: implement timeframe selection logic
+
+         trafficData = d3.nest()
+            .key(function(d) { 
+                return Math.round(parseInt(d.TIME)/1000)*1000;
+            })
             .sortKeys(d3.ascending)
             .rollup(function(d){
                 return {
                     volume: d3.sum(d, function(g) { return +g.LENGTH;})
                 }
             })
-            .entries(csv)
-            .filter(function(d) {return d.key !== "TIME"});
-
-        var appData = d3.nest()
-            .key(function(d) {return d.PACKAGE})
-            .sortKeys(d3.ascending)
-            .rollup(function(d){
-                return {
-                    volume: d3.sum(d, function(g) { return +g.LENGTH;}),
-                    packets: d.length,
-                    promotions: d3.set(_.pluck(d, "PROMOTIONID")).values().length
-                }
-            })
-            .entries(csv)
-            .filter(function(d) { return d.key !== "PACKAGE"; })
-            .filter(function(d) { return d.values.packets > 0; });
+            .entries(rawTrafficData)
+            .filter(function(d) {return d.key !== "NaN"});
+        // console.log(trafficData);
 
         // Add points where traffic is zero for correct interpolation
         var newData = [];
-        if (data.length > 0) {
-            var previousdate = data[0].key;
-            data.forEach(function(row) {
+        if (trafficData.length > 0) {
+            var previousdate = trafficData[0].key;
+            trafficData.forEach(function(row) {
                 if(row.key !== previousdate){
                     var newKeyStart = parseInt(previousdate) + 1000;
                     if (newKeyStart < parseInt(row.key)) {
@@ -323,15 +358,45 @@ function bindData(trafficChart, appBubbleChart) {
                 }
             });
         }
-        
-        data = data.concat(newData).sort(sortByKey);
-        trafficChart.bindTrafficData(data);
-        appBubbleChart.bindTrafficData(appData);
-    });
+
+        trafficData = trafficData.concat(newData).sort(sortByKey);
+        return trafficData;
+    }
+
+
+    this.getAppData = function(timeStart, timeEnd) {
+        var filteredCsv = rawTrafficData;
+        if (!_.isUndefined(timeStart) && !_.isUndefined(timeEnd))
+            filteredCsv = rawTrafficData.filter(function(d){
+                return d.TIME >= timeStart.toString() && d.TIME <= timeEnd.toString();
+            })
+        var tempAppData = d3.nest()
+            .key(function(d) {return d.PACKAGE})
+            .sortKeys(d3.ascending)
+            .rollup(function(d){
+                return {
+                    volume: d3.sum(d, function(g) { return +g.LENGTH;}),
+                    packets: d.length,
+                    promotions: d3.set(_.pluck(d, "PROMOTIONID")).values().length
+                }
+            })
+            .entries(filteredCsv)
+            .filter(function(d) { return d.key !== "PACKAGE"; })
+            .filter(function(d) { return d.values.packets > 0; });
+        for (key in tempAppData) {
+            appData[key] = tempAppData[key];
+        }
+        return appData;
+    }
+}
+
+function bindData(trafficChart, appBubbleChart) {
+    this.rawRilData = undefined;
+    this.rawTrafficData = undefined;    
 
     // Overlay the RNC state information over the area plot
     d3.csv("data/ril_log.csv", function(error, rilCsv) {
-        var rilData = rilCsv;
+        this.rilData = rilCsv;
         rilData.forEach(function(d) {
             if (d.rncState == "IDLE" || d.rncState == "IDLE_CCCH")
                 d.rncValue = 1;
@@ -350,9 +415,16 @@ function bindData(trafficChart, appBubbleChart) {
 }
 
 function drawStuff() {
-    var trafficChart = new TrafficChart();
-    var appBubbleChart = new AppBubbleChart();
-    bindData(trafficChart, appBubbleChart);
+    var trafficDataFilename = "data/trafficEvents.txt";
+    var trafficDataModel = new TrafficDataModel();
+    trafficDataModel.readData(trafficDataFilename, initCharts);
+
+    function initCharts() {
+        var trafficChart = new TrafficChart(trafficDataModel);
+        var appBubbleChart = new AppBubbleChart(trafficDataModel);
+        trafficChart.bindChartTimeframe(appBubbleChart);
+        bindData(trafficChart, appBubbleChart);
+    }
 }
 
 drawStuff();
