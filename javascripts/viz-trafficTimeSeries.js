@@ -1,23 +1,23 @@
 // Traffic and energy area plot
-$(function() {
-    var margin = {top: 30, right: 50, bottom: 100, left: 40},
-        margin2 = {top: 350, right: 50, bottom: 20, left: 40},
+function TrafficChart() {
+    var margin = {top: 150, right: 50, bottom: 30, left: 50},  // main graph
+        margin2 = {top: 30, right: 50, bottom: 30, left: 50},   // zoomable chart
         width = $("#traffic-timeSeries").width() - margin.left - margin.right,
-        height = 400 - margin.top - margin.bottom,
-        height2 = 400 - margin2.top - margin2.bottom;
+        height = 400 - margin.top - margin.bottom,  // main graph
+        height2 = 150 - margin2.top - margin2.bottom;   // zoomable chart
 
     var parseDate = d3.time.format("%b %Y").parse;
 
     var x = d3.time.scale().range([0, width]),
-        x2 = d3.time.scale().range([0, width]),
-        y = d3.scale.linear().range([height, 0]),
-        y2 = d3.scale.log().range([height2, 0]),
-        y3 = d3.scale.linear().range([height/2, 0]);
+        x2 = d3.time.scale().range([0, width]),         // zoomable area
+        y = d3.scale.linear().range([height, 0]),       // main traffic chart
+        y2 = d3.scale.log().range([height2, 0]),        // zoomable area
+        y3 = d3.scale.linear().range([height/2, 0]);    // RNC states chart
 
     var xAxis = d3.svg.axis().scale(x).orient("bottom"),
         xAxis2 = d3.svg.axis().scale(x2).orient("bottom"),
         yAxis = d3.svg.axis().scale(y).orient("left"),
-        yAxis3 = d3.svg.axis().scale(y3).orient("right");;
+        yAxis3 = d3.svg.axis().scale(y3).orient("right");
 
     var brush = d3.svg.brush()
         .x(x2)
@@ -79,52 +79,7 @@ $(function() {
         .attr("transform", "translate(" + width + "," + height/2 + ")")
         .call(yAxis3);
 
-    function sortByKey(a, b) {
-        if (a.key < b.key)
-            return -1;
-        if (a.key > b.key)
-            return 1;
-        return 0;
-    }
-
-    d3.csv("data/trafficEvents.txt", function(error, csv) {
-        var data=d3.nest()
-            .key(function(d) {return d.TIME;})
-            .sortKeys(d3.ascending)
-            .rollup(function(d){
-                return {
-                    volume: d3.sum(d, function(g) { return +g.LENGTH;})
-                }
-            })
-            .entries(csv)
-            .filter(function(d) {return d.key !== "TIME"});
-
-        // Add points where traffic is zero for correct interpolation
-        var newData = [];
-        if (data.length > 0) {
-            var previousdate = data[0].key;
-            data.forEach(function(row) {
-                if(row.key !== previousdate){
-                    var newKeyStart = parseInt(previousdate) + 1000;
-                    if (newKeyStart < parseInt(row.key)) {
-                        newData.push({ 
-                            key: newKeyStart.toString(),
-                            values: {volume: 1},
-                        });
-                    }
-                    var newKeyEnd = parseInt(row.key) - 1000;
-                    if (newKeyEnd > parseInt(previousdate)) {
-                        newData.push({ 
-                            key: newKeyEnd.toString(),
-                            values: {volume: 1},
-                        });
-                    }
-                    previousdate = row.key;
-                }
-            });
-        }
-        var data = data.concat(newData).sort(sortByKey);
-
+    function useTrafficData(data) {
         x.domain(d3.extent(data.map(function(d) { return d.key; })));
         y.domain([1, d3.max(data.map(function(d) { return d.values.volume; }))]);
         x2.domain(x.domain());
@@ -169,24 +124,9 @@ $(function() {
             .selectAll("rect")
             .attr("y", -6)
             .attr("height", height2 + 7);
-    });
+    }
 
-    // Overlay the RNC state information over the area plot
-    d3.csv("data/ril_log.csv", function(error, rilCsv) {
-        var rilData = rilCsv;
-        rilData.forEach(function(d) {
-            if (d.rncState == "IDLE" || d.rncState == "IDLE_CCCH")
-                d.rncValue = 1;
-            else if (d.rncState == "PCH")
-                d.rncValue = 2;
-            else if (d.rncState == "FACH")
-                d.rncValue = 40;
-            else if (d.rncState == "DCH")
-                d.rncValue = 100;
-            else
-                d.rncValue = 0;
-        });
-
+    function useRilData(rilData) {
         y3.domain([0, d3.max(rilData.map(function(d) { return d.rncValue; }))]);
 
         focus.append("path")
@@ -197,7 +137,7 @@ $(function() {
             .attr("transform", "translate(0," + height/2 + ")")
             .style("fill", "none")
             .style("stroke", "orange");
-    });
+    }
 
     function brushed() {
         x.domain(brush.empty() ? x2.domain() : brush.extent());
@@ -205,9 +145,13 @@ $(function() {
         focus.select("#rncChart").attr("d", area3);
         focus.select(".x.axis").call(xAxis);
     }
-});
 
-$(function(){
+    this.bindTrafficData = useTrafficData;
+    this.bindRilData = useRilData;
+}
+
+
+function AppBubbleChart() {
     // Various accessors that specify the four dimensions of data to visualize.
     function x(d) { return d.values.volume; }
     function y(d) { return d.values.packets; }
@@ -262,26 +206,7 @@ $(function(){
         .attr("y", margin.top+20)
         .text("Promotions (radius) per app");
 
-    // Load the data.
-    d3.csv("data/trafficEvents.txt", function(csv) {
-        var appData = d3.nest()
-            .key(function(d) {return d.PACKAGE})
-            .sortKeys(d3.ascending)
-            .rollup(function(d){
-                return {
-                    volume: d3.sum(d, function(g) { return +g.LENGTH;}),
-                    packets: d.length,
-                    promotions: d3.set(_.pluck(d, "PROMOTIONID")).values().length
-                }
-            })
-            .entries(csv)
-            .filter(function(d) { return d.key !== "PACKAGE"; })
-            .filter(function(d) { return d.values.packets > 0; });
-
-        // appData.forEach(function(d){
-        //     console.log(d.key, d.values.volume, d.values.packets, d.values.promotions);
-        // })
-
+    function useTrafficData(appData) {
         xScale.domain( d3.extent(appData.map(function(d) { return d.values.volume; })) );
         yScale.domain( d3.extent(appData.map(function(d) { return d.values.packets; })) );
         radiusScale.domain([0, d3.max(appData.map(function(d) { return d.values.promotions; }))])
@@ -334,5 +259,100 @@ $(function(){
         function order(a, b) {
             return radius(b) - radius(a);
         }
+    }
+
+    this.bindTrafficData = useTrafficData;
+}
+
+function bindData(trafficChart, appBubbleChart) {
+    function sortByKey(a, b) {
+        if (a.key < b.key)
+            return -1;
+        if (a.key > b.key)
+            return 1;
+        return 0;
+    }
+
+    d3.csv("data/trafficEvents.txt", function(error, csv) {
+        var data=d3.nest()
+            .key(function(d) {return d.TIME;})
+            .sortKeys(d3.ascending)
+            .rollup(function(d){
+                return {
+                    volume: d3.sum(d, function(g) { return +g.LENGTH;})
+                }
+            })
+            .entries(csv)
+            .filter(function(d) {return d.key !== "TIME"});
+
+        var appData = d3.nest()
+            .key(function(d) {return d.PACKAGE})
+            .sortKeys(d3.ascending)
+            .rollup(function(d){
+                return {
+                    volume: d3.sum(d, function(g) { return +g.LENGTH;}),
+                    packets: d.length,
+                    promotions: d3.set(_.pluck(d, "PROMOTIONID")).values().length
+                }
+            })
+            .entries(csv)
+            .filter(function(d) { return d.key !== "PACKAGE"; })
+            .filter(function(d) { return d.values.packets > 0; });
+
+        // Add points where traffic is zero for correct interpolation
+        var newData = [];
+        if (data.length > 0) {
+            var previousdate = data[0].key;
+            data.forEach(function(row) {
+                if(row.key !== previousdate){
+                    var newKeyStart = parseInt(previousdate) + 1000;
+                    if (newKeyStart < parseInt(row.key)) {
+                        newData.push({ 
+                            key: newKeyStart.toString(),
+                            values: {volume: 1},
+                        });
+                    }
+                    var newKeyEnd = parseInt(row.key) - 1000;
+                    if (newKeyEnd > parseInt(previousdate)) {
+                        newData.push({ 
+                            key: newKeyEnd.toString(),
+                            values: {volume: 1},
+                        });
+                    }
+                    previousdate = row.key;
+                }
+            });
+        }
+        
+        data = data.concat(newData).sort(sortByKey);
+        trafficChart.bindTrafficData(data);
+        appBubbleChart.bindTrafficData(appData);
     });
-});
+
+    // Overlay the RNC state information over the area plot
+    d3.csv("data/ril_log.csv", function(error, rilCsv) {
+        var rilData = rilCsv;
+        rilData.forEach(function(d) {
+            if (d.rncState == "IDLE" || d.rncState == "IDLE_CCCH")
+                d.rncValue = 1;
+            else if (d.rncState == "PCH")
+                d.rncValue = 2;
+            else if (d.rncState == "FACH")
+                d.rncValue = 40;
+            else if (d.rncState == "DCH")
+                d.rncValue = 100;
+            else
+                d.rncValue = 0;
+        });
+
+        trafficChart.bindRilData(rilData);
+    });
+}
+
+function drawStuff() {
+    var trafficChart = new TrafficChart();
+    var appBubbleChart = new AppBubbleChart();
+    bindData(trafficChart, appBubbleChart);
+}
+
+drawStuff();
