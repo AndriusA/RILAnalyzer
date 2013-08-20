@@ -217,16 +217,8 @@ function AppBubbleChart(dataModel) {
         .attr("y", margin.top+20)
         .text("Promotions (radius) per app");
 
-     // Add the x-axis.
-    area.append("g")
-        .attr("class", "x axis rotate")
-        .attr("transform", "translate(0," + height + ")")
-        .call(xAxis);
-
-    // Add the y-axis.
-    area.append("g")
-        .attr("class", "y axis")
-        .call(yAxis);
+    var dotCanvas = area.append("g").attr("class", "dots");
+    var labelCanvas = area.append("g");
 
     initTrafficData(dataModel.getAppData());
 
@@ -235,38 +227,50 @@ function AppBubbleChart(dataModel) {
         xScale.domain( d3.extent(appData.map(function(d) { return d.values.volume; })) );
         yScale.domain( [1, d3.max(appData.map(function(d) { return d.values.packets; }))] );
         radiusScale.domain([0, d3.max(appData.map(function(d) { return d.values.promotions; }))])
+
+        // Add the x-axis.
+        area.append("g")
+            .attr("class", "x axis rotate")
+            .attr("transform", "translate(0," + height + ")")
+            .call(xAxis);
+
+        // Add the y-axis.
+        area.append("g")
+            .attr("class", "y axis")
+            .call(yAxis);
+
         xAxis.tickFormat(d3.format("d"));
         useTrafficData(appData);
         console.log("asd");
     }
 
+   
+            
+
     function useTrafficData(appData) {
         // Add a dot per app
-        var dot = area.append("g")
-                .attr("class", "dots")
-            .selectAll(".dot")
-                .data(appData, function(d) { return d.key; })
+        var dot = dotCanvas.selectAll(".dot")
+                .data(appData, function(d) { return d.key+d.values.volume+d.values.packets+d.values.promotions; })
 
-        dot.enter().append("circle")
+        dot.enter().call(function(d){console.log("entering circle, ", d)}).append("circle")
                 .attr("class", "dot")
                 .style("fill", function(d) { return colorScale(color(d)); })
                 .style("opacity", "80%")
                 .call(position)
                 .sort(order)
-                .call(function(d){console.log("entering circle, ", d)})
+                
 
         dot.exit().call(function(d){console.log("removing circle, ", d)}).remove();
 
         // Add a title.
-        var text = area.append("g")
-            .selectAll(".dotLabel")
-                .data(appData, function(d) { return d.key; });
+        var text = labelCanvas.selectAll(".dotLabel")
+                .data(appData, function(d) { return d.key+d.values.volume+d.values.packets+d.values.promotions; });
 
         text.enter().append("text")
                 .attr("class", "dotLabel")
                 .attr("text-anchor", "middle")
                 .attr("fill", "black")
-                .attr("x", function(d) { console.log(d); return xScale(x(d)) })
+                .attr("x", function(d) { return xScale(x(d)) })
                 .attr("y", function(d) { return yScale(y(d)) })
                 .text(function(d) { return d.key; });
 
@@ -370,7 +374,7 @@ function TrafficDataModel() {
             filteredCsv = rawTrafficData.filter(function(d){
                 return d.TIME >= timeStart.toString() && d.TIME <= timeEnd.toString();
             })
-        var tempAppData = d3.nest()
+        return d3.nest()
             .key(function(d) {return d.PACKAGE})
             .sortKeys(d3.ascending)
             .rollup(function(d){
@@ -383,10 +387,6 @@ function TrafficDataModel() {
             .entries(filteredCsv)
             .filter(function(d) { return d.key !== "PACKAGE"; })
             .filter(function(d) { return d.values.packets > 0; });
-        for (key in tempAppData) {
-            appData[key] = tempAppData[key];
-        }
-        return appData;
     }
 }
 
