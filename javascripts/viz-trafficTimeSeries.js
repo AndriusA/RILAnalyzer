@@ -1,15 +1,16 @@
 // Traffic and energy area plot
-function TrafficChart(trafficDataModel, rilDataModel) {
-    var margin = {top: 170, right: 50, bottom: 30, left: 50},  // main graph
+function TrafficChart(svg, trafficDataModel, rilDataModel) {
+    var margin = {top: 200, right: 50, bottom: 30, left: 50},  // main graph
         margin2 = {top: 30, right: 50, bottom: 30, left: 50},   // zoomable chart
-        width = $("#traffic-timeSeries").width() - margin.left - margin.right,
-        height = 400 - margin.top - margin.bottom,  // main graph
+        width = svg[0][0].clientWidth / 2 - margin.left - margin.right,
+        width2 = svg[0][0].clientWidth - margin.left - margin.right,
+        height = 550 - margin.top - margin.bottom,  // main graph
         height2 = 150 - margin2.top - margin2.bottom;   // zoomable chart
 
     var parseDate = d3.time.format("%b %Y").parse;
 
     var x = d3.time.scale().range([0, width]),
-        x2 = d3.time.scale().range([0, width]),         // zoomable area
+        x2 = d3.time.scale().range([0, width2]),         // zoomable area
         y = d3.scale.linear().range([height, 0]),       // main traffic chart
         y2 = d3.scale.log().range([height2, 0]),        // zoomable area
         y3 = d3.scale.linear().range([height/2, 0]);    // RNC states chart
@@ -39,10 +40,6 @@ function TrafficChart(trafficDataModel, rilDataModel) {
         .interpolate("step")
         .x(function(d) { return x(d.date); })
         .y(function(d) { return y3(d.rncValue); });
-
-    var svg = d3.select("#traffic-timeSeries").append("svg")
-        .attr("width", width + margin.left + margin.right)
-        .attr("height", height + margin.top + margin.bottom);
 
     svg.append("defs").append("clipPath")
         .attr("id", "clip")
@@ -167,7 +164,7 @@ function TrafficChart(trafficDataModel, rilDataModel) {
 }
 
 
-function AppBubbleChart(dataModel) {
+function AppBubbleChart(svg, dataModel) {
     // Various accessors that specify the four dimensions of data to visualize.
     function x(d) { return d.values.volume; }
     function y(d) { return d.values.packets; }
@@ -176,50 +173,45 @@ function AppBubbleChart(dataModel) {
     function key(d) { return d.key; }
 
     // Chart dimensions.
-    var margin = {top: 30, right: 50, bottom: 30, left: 50},
-        width =  $("#promotionsApps-bubble").width() - margin.left - margin.right,
-        height = 400 - margin.top - margin.bottom;
+    var margin = {top: 200, right: 50, bottom: 30, left: 50},
+        width = svg[0][0].clientWidth / 2 - margin.right*2,
+        height = 550 - margin.top - margin.bottom;
 
     // Various scales. Need to set domain after loading data
     var xScale = d3.scale.log().range([0, width]),
         yScale = d3.scale.log().range([height, 0]),
-        radiusScale = d3.scale.sqrt().range([0, 40]),
+        radiusScale = d3.scale.sqrt().range([0, 60]),
         // ordinal scale with a range of ten categorical colors
         colorScale = d3.scale.category10();
 
     // The x & y axes.
     var xAxis = d3.svg.axis().scale(xScale).orient("bottom"),
         yAxis = d3.svg.axis().scale(yScale).orient("left").tickFormat(d3.format("d"));
-
-    // Create the SVG container and set the origin.
-    var svg = d3.select("#promotionsApps-bubble").append("svg")
-        .attr("width", width + margin.left + margin.right)
-        .attr("height", height + margin.top + margin.bottom)
   
     var area = svg.append("g")
-        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+        .attr("transform", "translate(" + (margin.left*2 + margin.right + width) + "," + margin.top + ")");
 
     // Add an x-axis label.
-    svg.append("text")
+    area.append("text")
         .attr("class", "x label")
         .attr("text-anchor", "end")
-        .attr("x", width + margin.left)
-        .attr("y", height + margin.top - 10)
+        .attr("dx", width)
+        .attr("dy", height - 10)
         .text("Data volume per app (bytes)");
 
     // Add a y-axis label.
-    svg.append("text")
+    area.append("text")
         .attr("class", "y label")
         .attr("text-anchor", "center")
-        .attr("y", margin.top + 10)
-        .attr("x", margin.left + 10)
+        .attr("dx", 10)
+        .attr("dy", 10)
         .text("Number of packets sent");
 
-    svg.append("text")
+    area.append("text")
         .attr("class", "x label")
         .attr("text-anchor", "center")
-        .attr("x", width/2)
-        .attr("y", margin.top+20)
+        .attr("dx", width/2-margin.left)
+        .attr("dy", -10)
         .text("Promotions (radius) per app");
 
     var dotCanvas = area.append("g").attr("class", "dots");
@@ -229,7 +221,7 @@ function AppBubbleChart(dataModel) {
 
     function initTrafficData(appData) {
         console.log("appData - useTrafficData", appData);
-        xScale.domain( d3.extent(appData.map(function(d) { return d.values.volume; })) );
+        xScale.domain( [d3.min(appData.map(function(d) { return d.values.volume; })) / 2, d3.max(appData.map(function(d) { return d.values.volume; }))] );
         yScale.domain( [1, d3.max(appData.map(function(d) { return d.values.packets; }))] );
         radiusScale.domain([0, d3.max(appData.map(function(d) { return d.values.promotions; }))])
 
@@ -257,7 +249,7 @@ function AppBubbleChart(dataModel) {
         dot.enter().append("circle")
                 .attr("class", "dot")
                 .style("fill", function(d) { return colorScale(color(d)); })
-                .style("opacity", "80%")
+                .style("fill-opacity", "0.7")
                 .call(position)
                 .sort(order)
                 
@@ -272,9 +264,14 @@ function AppBubbleChart(dataModel) {
                 .attr("class", "dotLabel")
                 .attr("text-anchor", "middle")
                 .attr("fill", "black")
+                .attr("dy", "1.25em")
                 .attr("x", function(d) { return xScale(x(d)) })
                 .attr("y", function(d) { return yScale(y(d)) })
-                .text(function(d) { return d.key; });
+                .text(function(d) { return d.key; })
+                .append("tspan")
+                .attr("dy", "1.25em")
+                .attr("x", function(d) { return xScale(x(d)) })
+                .text(function(d) { return "(" + d.values.promotions.toString() + ")"; });
 
         text.exit().remove();
 
@@ -428,13 +425,18 @@ function drawStuff() {
     var rilDataModel = new RilDataModel();
 
     var appBubbleChart, trafficChart;
+    var width = $("#traffic-timeSeries").width();
+    var height = 900;  // main graph
+    var svg = d3.select("#graphs").append("svg")
+        .attr("width", width)
+        .attr("height", height);
 
     trafficDataModel.readData(trafficDataFilename, initTraffic);
     function initTraffic() {
-        appBubbleChart = new AppBubbleChart(trafficDataModel);
+        appBubbleChart = new AppBubbleChart(svg, trafficDataModel);
         rilDataModel.readData(rilDataFilename, initRil);
         function initRil() {
-            trafficChart = new TrafficChart(trafficDataModel, rilDataModel); 
+            trafficChart = new TrafficChart(svg, trafficDataModel, rilDataModel); 
             trafficChart.bindChartTimeframe(appBubbleChart);
         }
     }
