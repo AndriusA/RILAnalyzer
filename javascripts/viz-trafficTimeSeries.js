@@ -1,5 +1,5 @@
 // Traffic and energy area plot
-function TrafficChart(trafficDataModel) {
+function TrafficChart(trafficDataModel, rilDataModel) {
     var margin = {top: 170, right: 50, bottom: 30, left: 50},  // main graph
         margin2 = {top: 30, right: 50, bottom: 30, left: 50},   // zoomable chart
         width = $("#traffic-timeSeries").width() - margin.left - margin.right,
@@ -69,9 +69,13 @@ function TrafficChart(trafficDataModel) {
         .attr("class", "y label")
         .attr("text-anchor", "center")
         .attr("dy", "1.25em")
-        .attr("x", 0)
-        .attr("y", margin.top-20)
-        .text("Data Volume");
+        .attr("x", 20)
+        .attr("y", margin.top-40)
+        .text("Data Volume")
+        .append("tspan")
+        .attr("dy", "1.25em")
+        .attr("x", 20)
+        .text("(bytes)");
 
     yAxis3.tickValues([1, 40, 100]).tickFormat(function(d, i){
         if (d ===  40)
@@ -127,6 +131,7 @@ function TrafficChart(trafficDataModel) {
     }
 
     function useRilData(rilData) {
+        console.log("use ril data", rilData)
         y3.domain([0, d3.max(rilData.map(function(d) { return d.rncValue; }))]);
 
         focus.append("path")
@@ -158,7 +163,7 @@ function TrafficChart(trafficDataModel) {
     }
 
     useTrafficData(trafficDataModel.getTrafficData());
-    this.bindRilData = useRilData;
+    useRilData(rilDataModel.getRilData());
 }
 
 
@@ -171,7 +176,7 @@ function AppBubbleChart(dataModel) {
     function key(d) { return d.key; }
 
     // Chart dimensions.
-    var margin = {top: 30, right: 50, bottom: 30, left: 40},
+    var margin = {top: 30, right: 50, bottom: 30, left: 50},
         width =  $("#promotionsApps-bubble").width() - margin.left - margin.right,
         height = 400 - margin.top - margin.bottom;
 
@@ -244,15 +249,12 @@ function AppBubbleChart(dataModel) {
         console.log("asd");
     }
 
-   
-            
-
     function useTrafficData(appData) {
         // Add a dot per app
         var dot = dotCanvas.selectAll(".dot")
                 .data(appData, function(d) { return d.key+d.values.volume+d.values.packets+d.values.promotions; })
 
-        dot.enter().call(function(d){console.log("entering circle, ", d)}).append("circle")
+        dot.enter().append("circle")
                 .attr("class", "dot")
                 .style("fill", function(d) { return colorScale(color(d)); })
                 .style("opacity", "80%")
@@ -260,7 +262,7 @@ function AppBubbleChart(dataModel) {
                 .sort(order)
                 
 
-        dot.exit().call(function(d){console.log("removing circle, ", d)}).remove();
+        dot.exit().remove();
 
         // Add a title.
         var text = labelCanvas.selectAll(".dotLabel")
@@ -390,40 +392,51 @@ function TrafficDataModel() {
     }
 }
 
-function bindData(trafficChart, appBubbleChart) {
-    this.rawRilData = undefined;
-    this.rawTrafficData = undefined;    
+function RilDataModel() {
+    var rilData = [];
 
-    // Overlay the RNC state information over the area plot
-    d3.csv("data/ril_log.csv", function(error, rilCsv) {
-        this.rilData = rilCsv;
-        rilData.forEach(function(d) {
-            if (d.rncState == "IDLE" || d.rncState == "IDLE_CCCH")
-                d.rncValue = 1;
-            else if (d.rncState == "PCH")
-                d.rncValue = 2;
-            else if (d.rncState == "FACH")
-                d.rncValue = 40;
-            else if (d.rncState == "DCH")
-                d.rncValue = 100;
-            else
-                d.rncValue = 0;
+    this.readData = function(filename, continuation) {
+        d3.csv(filename, function(error, rilCsv) {
+            rilData = rilCsv;
+            rilData.forEach(function(d) {
+                if (d.rncState == "IDLE" || d.rncState == "IDLE_CCCH")
+                    d.rncValue = 1;
+                else if (d.rncState == "PCH")
+                    d.rncValue = 2;
+                else if (d.rncState == "FACH")
+                    d.rncValue = 40;
+                else if (d.rncState == "DCH")
+                    d.rncValue = 100;
+                else
+                    d.rncValue = 0;
+            });
+            console.log("read ril data", rilData);
+            continuation();
         });
+    }
+    
 
-        trafficChart.bindRilData(rilData);
-    });
+    this.getRilData = function() {
+        return rilData;
+    }
 }
 
 function drawStuff() {
     var trafficDataFilename = "data/trafficEvents.txt";
+    var rilDataFilename = "data/ril_log.csv";
     var trafficDataModel = new TrafficDataModel();
-    trafficDataModel.readData(trafficDataFilename, initCharts);
+    var rilDataModel = new RilDataModel();
 
-    function initCharts() {
-        var trafficChart = new TrafficChart(trafficDataModel);
-        var appBubbleChart = new AppBubbleChart(trafficDataModel);
-        trafficChart.bindChartTimeframe(appBubbleChart);
-        bindData(trafficChart, appBubbleChart);
+    var appBubbleChart, trafficChart;
+
+    trafficDataModel.readData(trafficDataFilename, initTraffic);
+    function initTraffic() {
+        appBubbleChart = new AppBubbleChart(trafficDataModel);
+        rilDataModel.readData(rilDataFilename, initRil);
+        function initRil() {
+            trafficChart = new TrafficChart(trafficDataModel, rilDataModel); 
+            trafficChart.bindChartTimeframe(appBubbleChart);
+        }
     }
 }
 
