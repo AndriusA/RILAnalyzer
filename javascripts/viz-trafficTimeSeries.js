@@ -114,6 +114,14 @@ function TrafficChart(svg, trafficDataModel, rilDataModel) {
             .datum(data)
             .attr("d", area2);
 
+        context.append("text")
+            .attr("class", "graph-notes")
+            .attr("text-anchor", "center")
+            .attr("x", width/2+margin.left)
+            .attr("y", -10)
+            .attr("dy", "1.25em")
+            .text("Select an area to look into a particular timeframe of the data")
+
         context.append("g")
             .attr("class", "x axis")
             .attr("transform", "translate(0," + height2 + ")")
@@ -128,7 +136,7 @@ function TrafficChart(svg, trafficDataModel, rilDataModel) {
     }
 
     function useRilData(rilData) {
-        console.log("use ril data", rilData)
+        // console.log("use ril data", rilData)
         y3.domain([0, d3.max(rilData.map(function(d) { return d.rncValue; }))]);
 
         focus.append("path")
@@ -142,17 +150,17 @@ function TrafficChart(svg, trafficDataModel, rilDataModel) {
     }
 
     var anotherChart = undefined;
+    var boundCharts = [];
 
     this.bindChartTimeframe =  function(chart) {
-        console.log("binding");
-        console.log(this);
-        anotherChart = chart;
+        boundCharts.push(chart);
     }
 
     function brushed() {
         x.domain(brush.empty() ? x2.domain() : brush.extent());
-        if (! _.isUndefined(anotherChart)) {
-            anotherChart.adjustTimeframe(x.domain());
+        for (i in boundCharts){
+            var chart = boundCharts[i];
+            chart.adjustTimeframe(x.domain());
         }
         focus.select("#dataChart").attr("d", area);
         focus.select("#rncChart").attr("d", area3);
@@ -220,7 +228,7 @@ function AppBubbleChart(svg, dataModel) {
     initTrafficData(dataModel.getAppData());
 
     function initTrafficData(appData) {
-        console.log("appData - useTrafficData", appData);
+        // console.log("appData - useTrafficData", appData);
         xScale.domain( [d3.min(appData.map(function(d) { return d.values.volume; })) / 2, d3.max(appData.map(function(d) { return d.values.volume; }))] );
         yScale.domain( [1, d3.max(appData.map(function(d) { return d.values.packets; }))] );
         radiusScale.domain([0, d3.max(appData.map(function(d) { return d.values.promotions; }))])
@@ -238,7 +246,6 @@ function AppBubbleChart(svg, dataModel) {
 
         xAxis.tickFormat(d3.format("d"));
         useTrafficData(appData);
-        console.log("asd");
     }
 
     function useTrafficData(appData) {
@@ -288,14 +295,134 @@ function AppBubbleChart(svg, dataModel) {
         }
     }
 
-
-
     this.adjustTimeframe = function(timeframe){
-        console.log("adjusting bubblechart to", timeframe);
+        // console.log("adjusting bubblechart to", timeframe);
         var timeStart = Date.parse(timeframe[0]);
         var timeEnd = Date.parse(timeframe[1]);
         useTrafficData(dataModel.getAppData(timeStart, timeEnd));
-        // dataModel.getAppData(timeStart, timeEnd);
+    }
+}
+
+function RncStateChart(svg, dataModel) {
+    // Chart dimensions.
+    var margin = {top: 600, right: 50, bottom: 30, left: 50},
+        width = svg[0][0].clientWidth / 2 - margin.right*2,
+        height = 950 - margin.top - margin.bottom;
+
+    var rncTransitions = dataModel.getRncTransitions();
+    var nodes = rncTransitions.nodes;
+    var links = rncTransitions.links;
+    console.log("nodes:", nodes);
+    console.log("links:", links);
+    var force = d3.layout.force()
+        .nodes(d3.values(nodes))
+        .links(links)
+        .size([width, height])
+        .linkDistance(220)
+        .charge(-3000)
+
+    var area = svg.append("g")
+        .attr("transform", "translate(" + (margin.left) + "," + margin.top + ")")
+        .attr("width", width)
+        .attr("height", height)    
+
+    var defs = area.append("svg:defs")
+    var pathArea = area.append("svg:g")
+    var nodesArea = area.append("g")
+    var textArea = area.append("g")
+    
+    var path, circle, text;
+
+    function restart(links, nodes) {
+        
+        console.log("restarting");
+
+        force.links(links);
+        force.nodes(d3.values(nodes));
+        force.on("tick", tick)
+        
+        var markers = defs.selectAll("marker")
+            .data(_.pluck(force.links(), "count"), function(d){ return d;});
+
+        markers.enter().append("marker")
+                .attr("class", "linkMarker")
+                .attr("id", String)
+                .attr("viewBox", "0 -5 10 10")
+                .attr("refX", 30)
+                .attr("refY", -1.5)
+                .attr("markerWidth", 6)
+                .attr("markerHeight", 6)
+                .attr("orient", "auto")
+            .append("svg:path")
+                .attr("d", "M0,-5L10,0L0,5");
+        markers.exit().remove();
+
+        path = pathArea.selectAll("path")
+                .data(force.links(), function(d){ return d.source.name+"-"+d.target.name+"-"+d.proportion;})
+
+        path.enter().append("svg:path")
+                .style("stroke-opacity", function(d) { return d.proportion; })
+                .attr("class", function(d) { return "link " + d.count; })
+                .attr("marker-end", function(d) { return "url(#" + d.count + ")"; })
+
+        path.exit().remove()
+
+
+        circle = nodesArea.selectAll("circle")
+                .data(force.nodes(), function(d) { return d.name; })
+
+        circle.enter().append("circle")
+                .attr("class", "nodeName")
+                .attr("r", 26)
+                .call(force.drag);
+
+        circle.exit().remove();
+
+        text = textArea.selectAll("g")
+                .data(force.nodes())
+        
+        var svgText = text.enter().append("g");
+        text.exit().remove();
+
+        svgText.append("svg:text")
+            .attr("text-anchor", "center")
+            .attr("x", -15)
+            .attr("y", ".31em")
+            .text(function(d) { return d.name; });
+
+        force.start();
+
+        // Use elliptical arc path segments to doubly-encode directionality.
+        function tick() {
+            path.attr("d", function(d) {
+                // console.log("path", d);
+                var dx = d.target.x - d.source.x,
+                dy = d.target.y - d.source.y,
+                dr = Math.sqrt(dx * dx + dy * dy);
+                return "M" + d.source.x + "," + d.source.y + "A" + dr + "," + dr + " 0 0,1 " + d.target.x + "," + d.target.y;
+            });
+
+            circle.attr("transform", function(d) {
+                return "translate(" + d.x + "," + d.y + ")";
+            });
+
+            text.attr("transform", function(d) {
+                return "translate(" + d.x + "," + d.y + ")";
+            });
+        }
+    }
+
+    restart(links, nodes); 
+
+    this.adjustTimeframe = function(timeframe){
+        console.log("adjusting rnc state chart to", timeframe);
+        var timeStart = Date.parse(timeframe[0]);
+        var timeEnd = Date.parse(timeframe[1]);
+        var rncTransitions = dataModel.getRncTransitions(timeStart, timeEnd);
+        console.log(rncTransitions);
+        var nodes = rncTransitions.nodes;
+        var links = rncTransitions.links;
+        restart(links, nodes);
     }
 }
 
@@ -335,7 +462,6 @@ function TrafficDataModel() {
             })
             .entries(rawTrafficData)
             .filter(function(d) {return d.key !== "NaN"});
-        // console.log(trafficData);
 
         // Add points where traffic is zero for correct interpolation
         var newData = [];
@@ -391,9 +517,19 @@ function TrafficDataModel() {
 
 function RilDataModel() {
     var rilData = [];
+    var rawRncTransitions = [];
+    var stateLinks = [];
+    var stateNodes = {};
 
-    this.readData = function(filename, continuation) {
-        d3.csv(filename, function(error, rilCsv) {
+    this.readData = function(filename1, filename2, continuation) {
+        var readNext = function(){
+            d3.csv(filename2, function(error, transitionsCsv){
+                rawRncTransitions = transitionsCsv;
+                continuation();
+            })
+        };
+
+        d3.csv(filename1, function(error, rilCsv) {
             rilData = rilCsv;
             rilData.forEach(function(d) {
                 if (d.rncState == "IDLE" || d.rncState == "IDLE_CCCH")
@@ -407,8 +543,7 @@ function RilDataModel() {
                 else
                     d.rncValue = 0;
             });
-            console.log("read ril data", rilData);
-            continuation();
+            readNext();
         });
     }
     
@@ -416,17 +551,46 @@ function RilDataModel() {
     this.getRilData = function() {
         return rilData;
     }
+
+    this.getRncTransitions = function(timeStart, timeEnd) {
+        var fFilter = function(d) { return true; }
+        if (!_.isUndefined(timeStart) && !_.isUndefined(timeEnd))
+            fFilter = function(d){
+                return d.TIME >= timeStart.toString() && d.TIME <= timeEnd.toString();
+            }
+        stateLinks = []
+        rawRncTransitions.filter(fFilter)
+            .forEach(function(d){
+                links = _.where(stateLinks, {source: d.PREVSTATE, target: d.NEXTSTATE})
+                if (_.isEmpty(links))
+                    stateLinks.push({source: d.PREVSTATE, target: d.NEXTSTATE, count: 1})
+                else
+                    links[0].count += 1
+            });
+        stateLinks.forEach(function(d){
+            d.proportion = d.count / _.reduce(_.where(stateLinks, {source: d.source}), function(sum, item) { return sum + item.count }, 0);
+        })
+
+        // Compute the distinct nodes from the links.
+        stateLinks.forEach(function(link) {
+            link.source = stateNodes[link.source] || (stateNodes[link.source] = {name: link.source});
+            link.target = stateNodes[link.target] || (stateNodes[link.target] = {name: link.target});
+        });
+        console.log("stateLinks:", stateLinks, stateNodes);
+        return {nodes: stateNodes, links: stateLinks};
+    }
 }
 
 function drawStuff() {
     var trafficDataFilename = "data/trafficEvents.txt";
     var rilDataFilename = "data/ril_log.csv";
+    var rncTransitionsFilename = "data/rncTransitions.txt";
     var trafficDataModel = new TrafficDataModel();
     var rilDataModel = new RilDataModel();
 
     var appBubbleChart, trafficChart;
     var width = $("#traffic-timeSeries").width();
-    var height = 900;  // main graph
+    var height = 1000;  // main graph
     var svg = d3.select("#graphs").append("svg")
         .attr("width", width)
         .attr("height", height);
@@ -434,10 +598,12 @@ function drawStuff() {
     trafficDataModel.readData(trafficDataFilename, initTraffic);
     function initTraffic() {
         appBubbleChart = new AppBubbleChart(svg, trafficDataModel);
-        rilDataModel.readData(rilDataFilename, initRil);
+        rilDataModel.readData(rilDataFilename, rncTransitionsFilename, initRil);
         function initRil() {
             trafficChart = new TrafficChart(svg, trafficDataModel, rilDataModel); 
+            rncStateChart = new RncStateChart(svg, rilDataModel);
             trafficChart.bindChartTimeframe(appBubbleChart);
+            trafficChart.bindChartTimeframe(rncStateChart);
         }
     }
 }
