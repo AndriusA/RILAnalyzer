@@ -426,11 +426,71 @@ function RncStateChart(svg, dataModel) {
     }
 }
 
+function TrafficHeatmap(svg, dataModel) {
+    // Chart dimensions.
+    var margin = {top: 600, right: 50, bottom: 30, left: 100},
+        width = svg[0][0].clientWidth / 2 - margin.right*2,
+        height = 950 - margin.top - margin.bottom,
+        buckets = 9,
+        colors = ["#ffffd9","#edf8b1","#c7e9b4","#7fcdbb","#41b6c4","#1d91c0","#225ea8","#253494","#081d58"], // alternatively colorbrewer.YlGnBu[9]
+        apps = dataModel.getApps(),
+        orgs = dataModel.getOrgs(),
+        gridSize = 24,
+        legendElementWidth = gridSize*2;
+
+    var data = dataModel.getAppOrgInfo();
+
+    var area = svg.append("g")
+        .attr("transform", "translate(" + (margin.left*2+width+margin.right) + "," + margin.top + ")")
+        .attr("width", width)
+        .attr("height", height)
+
+    var colorScale = d3.scale.quantile()
+        .domain([0, buckets - 1, d3.max(data, function (d) { return d.value; })])
+        .range(colors);
+
+    var appLabels = area.selectAll(".appLabel")
+        .data(apps)
+        .enter().append("text")
+            .text(function (d) { return d; })
+            .attr("x", 0)
+            .attr("y", function (d, i) { return i * gridSize; })
+            .style("text-anchor", "end")
+            .attr("transform", "translate(-6," + gridSize / 1.5 + ")")
+            .attr("class", "appLabel mono axis");
+
+    var orgLabels = area.selectAll(".orgLabel")
+        .data(orgs)
+        .enter().append("text")
+        .text(function(d) { return d; })
+        .style("text-anchor", "start")
+        .attr("transform", function(d, i) { return "translate("+ ((i+0.25)*gridSize)+","+((apps.length+1)*gridSize)+") rotate(90) " })
+        .attr("class", "orgLabel mono axis");
+
+    var heatMap = area.selectAll(".ipOrg")
+        .data(data)
+        .enter().append("rect")
+        .attr("x", function(d) { return _.indexOf(orgs, d.org) * gridSize; })
+        .attr("y", function(d) { return _.indexOf(apps, d.app) * gridSize; })
+        .attr("rx", 4)
+        .attr("ry", 4)
+        .attr("class", "ipOrg bordered")
+        .attr("width", gridSize)
+        .attr("height", gridSize)
+        .style("fill", function(d){ 
+            return colorScale(d.value); 
+        });
+
+    heatMap.append("title").text(function(d) { return d.value; });
+}
+
 function TrafficDataModel() {
     var rawTrafficData = undefined;
 
     var appData = [];
     var trafficData = [];
+    var ipOrgMapping = {};
+    this.ownIp = undefined;
 
     function sortByKey(a, b) {
         if (a.key < b.key)
@@ -440,11 +500,21 @@ function TrafficDataModel() {
         return 0;
     };
 
-    this.readData = function(filename, continuation) {
+    this.readData = function(filename, filenameMapping, continuation) {
         d3.csv(filename, function(error, csv) {
-            rawTrafficData = csv;
+            rawTrafficData = csv.filter(function(d){ return d.TIME !== "TIME"; });
             continuation();
         });
+
+        d3.csv(filenameMapping, function(error, csv){
+            csv.forEach(function(d){
+                if (d.ORGNAME === "own")
+                    this.ownIp = d.IP
+                else
+                    ipOrgMapping[d.IP] = d.ORGNAME
+            })
+            console.log(ipOrgMapping);
+        })
     }
 
     this.getTrafficData = function(timeStart, timeEnd) {
@@ -512,6 +582,49 @@ function TrafficDataModel() {
             .entries(filteredCsv)
             .filter(function(d) { return d.key !== "PACKAGE"; })
             .filter(function(d) { return d.values.packets > 0; });
+    }
+
+    this.getApps = function() {
+        return _.uniq(_.pluck(rawTrafficData, 'PACKAGE'));
+    }
+
+    this.getOrgs = function() {
+        return _.uniq(_.values(ipOrgMapping))
+    }
+
+    this.getAppOrgInfo = function(timeStart, timeEnd) {
+        var fFilter = function(d) { return true; }
+        if (!_.isUndefined(timeStart) && !_.isUndefined(timeEnd))
+            fFilter = function(d){
+                return d.TIME >= timeStart.toString() && d.TIME <= timeEnd.toString();
+            }
+        var packetCounts = d3.nest()
+            .key(function(d) { return d.PACKAGE})
+            .key(function(d) { 
+                if (d.SRC !== this.ownIp)
+                    return ipOrgMapping[d.SRC];
+                else
+                    return ipOrgMapping[d.DST];
+            })
+            .rollup(function(d){
+                return {
+                    volume: d3.sum(d, function(g) { return +g.LENGTH;}),
+                    packets: d.length
+                }
+            })
+            .entries(rawTrafficData.filter(fFilter))
+
+        var result = [];
+        packetCounts.forEach(function(pc) {
+            pc.values.forEach(function(org) {
+                result.push({
+                    app: pc.key,
+                    org: org.key,
+                    value: org.values.packets
+                })
+            })
+        })
+        return result;
     }
 }
 
@@ -585,23 +698,25 @@ function drawStuff() {
     var trafficDataFilename = "data/trafficEvents.txt";
     var rilDataFilename = "data/ril_log.csv";
     var rncTransitionsFilename = "data/rncTransitions.txt";
+    var ipOrgData = "data/ipOrgMappings.txt";
     var trafficDataModel = new TrafficDataModel();
     var rilDataModel = new RilDataModel();
 
     var appBubbleChart, trafficChart;
     var width = $("#traffic-timeSeries").width();
-    var height = 1000;  // main graph
+    var height = 1200;  // main graph
     var svg = d3.select("#graphs").append("svg")
         .attr("width", width)
         .attr("height", height);
 
-    trafficDataModel.readData(trafficDataFilename, initTraffic);
+    trafficDataModel.readData(trafficDataFilename, ipOrgData, initTraffic);
     function initTraffic() {
         appBubbleChart = new AppBubbleChart(svg, trafficDataModel);
         rilDataModel.readData(rilDataFilename, rncTransitionsFilename, initRil);
         function initRil() {
             trafficChart = new TrafficChart(svg, trafficDataModel, rilDataModel); 
             rncStateChart = new RncStateChart(svg, rilDataModel);
+            trafficHeatmap = new TrafficHeatmap(svg, trafficDataModel);
             trafficChart.bindChartTimeframe(appBubbleChart);
             trafficChart.bindChartTimeframe(rncStateChart);
         }
