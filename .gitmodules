@@ -1,0 +1,3 @@
+[submodule "ril_analyzer"]
+	path = ril_analyzer
+	url = https://github.com/narseo/ril_analyzer
