@@ -703,7 +703,7 @@ function drawStuff() {
     var rilDataModel = new RilDataModel();
 
     var appBubbleChart, trafficChart;
-    var width = $("#traffic-timeSeries").width();
+    var width = $("#graphs").width();
     var height = 1200;  // main graph
     var svg = d3.select("#graphs").append("svg")
         .attr("width", width)
